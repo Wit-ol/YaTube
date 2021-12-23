@@ -79,6 +79,7 @@ class PostPagesTests(TestCase):
             )
         }
         for reverse_name, template in templates_pages_names.items():
+            cache.clear()
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
@@ -92,6 +93,7 @@ class PostPagesTests(TestCase):
             reverse(self.POST_DETAIL, args=[self.post.id]),
         }
         for reverse_name in templates_pages_names:
+            cache.clear()
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 if reverse_name == reverse(self.POST_DETAIL,
