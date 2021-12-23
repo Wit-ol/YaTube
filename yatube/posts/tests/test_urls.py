@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from django.core.cache import cache
 from django.test import TestCase, Client
 from django.urls import reverse
 
@@ -56,14 +57,15 @@ class PostsURLTests(TestCase):
 
     def test_urls_uses_correct_template(self):
         templates_url_names = {
-            '/': 'posts/index.html',
+            '/index/': 'posts/index.html',
             '/group/test-slug/': 'posts/group_list.html',
             f'/profile/{self.user}/': 'posts/profile.html',
             f'/posts/{self.post.id}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
-            f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
+            f'/posts/{self.post.id}/edit/': 'posts/create_post.html'
         }
         for address, template in templates_url_names.items():
+            cache.clear()
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
                 self.assertTemplateUsed(response, template)

@@ -65,3 +65,23 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ["-created"]
+
+
+class Follow(models.Model):
+    objects = None
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="follower"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="following"
+    )
+
+    class Meta:
+        unique_together = ['author', 'user']
+
+    def __str__(self):
+        return f'follower: {self.user} author: {self.author}'

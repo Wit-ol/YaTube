@@ -22,6 +22,5 @@ class PostModelTest(TestCase):
         """Проверяем, что у моделей корректно работает __str__."""
         post = PostModelTest.post
         self.assertEqual(str(post), 'Тестовая группа')
-
         group = PostModelTest.group
         self.assertEqual(str(group), 'Тестовая группа')

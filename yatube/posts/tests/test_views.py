@@ -1,15 +1,20 @@
+import shutil
+import tempfile
+
 from django import forms
 from django.conf import settings
+from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
-from django.core.cache import cache
 
-from ..models import Group, Post, User
+from ..models import Group, Post, User, Comment
 
 USERNAME = 'test-username'
 INDEX = 'posts:index'
 GROUP_LIST = 'posts:group_list'
 POST_CREATE = 'posts:post_create'
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostPagesTests(TestCase):
@@ -21,10 +26,24 @@ class PostPagesTests(TestCase):
             title='test-group',
             slug='test-slug',
         )
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         cls.post = Post.objects.create(
             text='Тестовый текст',
             author=cls.user,
-            group=cls.group
+            group=cls.group,
+            image = uploaded
         )
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
@@ -33,7 +52,13 @@ class PostPagesTests(TestCase):
         cls.POST_DETAIL = 'posts:post_detail'
         cls.POST_EDIT = 'posts:post_edit'
 
-    def test_test_reverse_name_correct_html(self):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cache.clear()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+    def test_reverse_name_correct_html(self):
         """URL-адрес использует соответствующий шаблон."""
         templates_pages_names = {
             reverse(INDEX): 'posts/index.html',
@@ -78,10 +103,12 @@ class PostPagesTests(TestCase):
                 post_id_0 = first_object.pk
                 post_text_0 = first_object.text
                 post_group_0 = first_object.group.slug
+                post_image_0 = first_object.image
                 self.assertEqual(post_text_0, self.post.text)
                 self.assertEqual(post_id_0, self.post.pk)
                 self.assertEqual(post_author_0, self.post.author)
                 self.assertEqual(post_group_0, self.group.slug)
+                self.assertEqual(post_image_0, self.post.image)
 
     def test_post_edit_correct_context(self):
         """Корректный context у post_edit."""
@@ -111,6 +138,7 @@ class PostPagesTests(TestCase):
     def test_post_in_main_page(self):
         """Новый пост отображается на главной странице
             и на странице группы."""
+        cache.clear()
         url = ((reverse(INDEX)),
                reverse(GROUP_LIST, kwargs={'slug': self.group.slug}),)
         for urls in url:
@@ -133,22 +161,42 @@ class PostPagesTests(TestCase):
                 kwargs={'slug': self.group.slug},))
         self.assertNotEqual(response.context.get('page_obj'), self.post)
 
-    def test_index_cache(self):
-        """Проверка работы кэша."""
-        self.client.post(
-            reverse('new_post'),
-            data={
-                'text': 'test index cache',
-                'group': self.group.id,
-            },
+    def test_authorized_client_allowed_to_add_comment(self):
+        '''Авторизованный пользователь может оставлять комментарий.'''
+        comment_quantity = Comment.objects.count()
+        form_data = {
+            'text': 'Comment'
+        }
+        self.authorized_client.post(
+            reverse('posts:add_comment',
+                    kwargs={'post_id': self.post.id, }),
+            data=form_data,
             follow=True
         )
-        response = self.authorized_client.get(reverse('index'))
-        self.assertNotContains(response, 'test index cache', status_code=200)
-        cache.clear()
-        response = self.authorized_client.get(reverse('index'))
-        self.assertContains(response, 'test index cache', count=1, status_code=200)
+        self.assertEqual(Comment.objects.count(), comment_quantity + 1)
 
+    def test_guest_client_not_allowed_to_add_comment(self):
+        '''Неавторизованный пользователь не может оставлять комментарий.'''
+        comment_quantity = Comment.objects.count()
+        form_data = {'text': 'Оставляем комментарий'}
+        self.client.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.id, }),
+            data=form_data,
+            follow=True
+        )
+        self.assertNotEqual(Comment.objects.count(), comment_quantity + 1)
+
+    def test_cache(self):
+        url = reverse(INDEX)
+        response = self.client.get(url).content
+        Post.objects.create(
+            text='Текст тестовый',
+            group=self.group,
+            author=self.user
+        )
+        self.assertEqual(response, self.client.get(url).content)
+        cache.clear()
+        self.assertNotEqual(response, self.client.get(url).content)
 
 class TestPaginator(TestCase):
     @classmethod

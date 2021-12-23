@@ -1,80 +1,52 @@
 {% extends "base.html" %}
-{% block css %}
+{% load thumbnail %}
+{% block title %}
+  {% if is_edit %}
+    Редактировать
+  {% else %}
+    Добавить
+  {% endif %}
+    запись
 {% endblock %}
-{% load user_filters %}
-<head>
-  <title>
-    {% block title %}
-      {% if is_edit %}
-        Редактировать
-      {% else %}
-        Добавить
-      {% endif %}
-      запись
-    {% endblock %}
-  </title>
-</head>
-<body>
-  <main>
-    {% block content %}
-      <div class="container py-5">
-        <div class="row justify-content-center">
-          <div class="col-md-8 p-5">
-            <div class="card">
-              <div class="card-header">
-                {% if is_edit %}
-                  Редактировать запись
-                {% else %}
-                  Добавить запись
-                {% endif %}
+{% block content %}
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 p-5">
+        <div class="card">
+          <div class="card-header">
+            {% if is_edit %}
+              Редактировать запись
+            {% else %}
+              Добавить запись
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+              {% for field in form %}
+                <div class="form-group row my-3 p-3" aria-required={% if field.field.required %}"true"{% else %}"false"{% endif %}>
+                  <label for="{{ field.id_for_label }}" class="col-md-4 col-form-label text-md-right">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
+                    <div class="col-md-6">
+                      {{ field }}
+                      {% if field.help_text %}
+                      <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                      {% endif %}
+                    </div>
+                </div>
+              {% endfor %}
+              <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                  {% if is_edit %}
+                    Сохранить
+                  {% else %}
+                    Добавить
+                  {% endif %}
+                </button>
               </div>
-              <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                  <div class="form-group row my-3 p-3">
-                    <label for="id_text">
-                      {{ form.text.label }}
-                      <span class="required text-danger" >*</span>
-                    </label>
-                    <textarea name="text" cols="40" rows="10" class="form-control" required id="id_text">
-                      {% if is_edit %}{{ form.text.value }}{% endif %}
-                    </textarea>
-                    <small id="id_text-help" class="form-text text-muted">
-                      {{ form.text.help_text }}
-                    </small>
-                  </div>
-                  <div class="form-group row my-3 p-3">
-                    <label for="id_group">
-                      {{ form.group.label }}
-                    </label>
-                    <select name="group" class="form-control" id="id_group">
-                      <option value="" selected></option>
-                      {% for group in groups %}
-                       <option value="{{ group.id }}"> {{ group.title }}</option>
-                      {% endfor %}
-                    </select>
-                    <small id="id_group-help" class="form-text text-muted">
-                      {{ form.text.help_text }}
-                    </small>
-                  </div>
-                  <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary">
-                     {% if is_edit %}
-                       Сохранить
-                     {% else %}
-                       Добавить
-                     {% endif %}
-                    </button>
-                  </div>
-                  {% csrf_token %}
-                  {% for field in form %}
-                    ...
-                  {% endfor %}
-                </form>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
-    {% endblock %}
-  </main>
-</body>
+    </div>
+  </div>
+{% endblock %}

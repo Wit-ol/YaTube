@@ -19,3 +19,4 @@ class CommentForm(forms.ModelForm):
         help_texts = {
             'text': 'Текст нового комментария',
         }
+
