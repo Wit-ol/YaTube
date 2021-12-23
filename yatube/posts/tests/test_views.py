@@ -43,7 +43,7 @@ class PostPagesTests(TestCase):
             text='Тестовый текст',
             author=cls.user,
             group=cls.group,
-            image = uploaded
+            image=uploaded
         )
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
@@ -199,6 +199,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(response, self.client.get(url).content)
         cache.clear()
         self.assertNotEqual(response, self.client.get(url).content)
+
 
 class TestPaginator(TestCase):
     @classmethod
