@@ -17,16 +17,7 @@ class PostModelTest(TestCase):
             author=cls.user,
             text='Тестовая группа',
         )
-        # Не понимаю как сделать тест новых моделей. Подобный проходит pytest, но не локальные
-        # хотя я и другие тесты обновляла на основе этих
-        #cls.comment = Comment.objects.create(
-        #    author=cls.user,
-        #    text='Текстовая группа',
-        #)
-        #cls.follow = Follow.objects.create(
-        #    author=cls.user,
-        #    user=cls.user_f,
-        #)
+
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
         post = PostModelTest.post
