@@ -37,6 +37,6 @@
       <a class="btn btn-primary" href="{% url 'posts:post_edit' post.pk %}">редактировать запись</a>
       {% endif %}
       </article>
-      {% include 'includes/comment.html' %}
+      {% include 'includes/comment.html' with comments=post.comments.all form_comment=form_comment post=post %}
   </div>
 {% endblock %}
