@@ -65,13 +65,11 @@ def post_detail(request, post_id):
     author = post.author
     pub_date = post.pub_date
     form = CommentForm(instance=None)
-    comments = post.comments.all()
     context = {
         'post': post,
         'author': author,
         'pub_date': pub_date,
         'form': form,
-        'comments': comments
     }
     return render(request, 'posts/post_detail.html', context)
 
