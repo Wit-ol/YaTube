@@ -49,4 +49,5 @@ class FollowModelTest(TestCase):
     def test_models_have_correct_object_names(self):
         """Проверяем, что у модели корректно работает __str__."""
         follow = FollowModelTest.follow
-        self.assertEqual(str(follow), f'follower: {self.user} author: {self.author}')
+        self.assertEqual(str(follow),
+                         f'follower: {self.user} author: {self.author}')
